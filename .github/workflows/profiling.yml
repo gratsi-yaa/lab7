@@ -1,0 +1,40 @@
+# .github/workflows/profiling.yml
+name: Profile C++ Code with gprof
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  profiling:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ binutils
+        
+    - name: Compile with profiling flags
+      run: g++ -pg -o profiling profiling.cpp
+      
+    - name: Run program (generates gmon.out)
+      run: ./profiling
+      
+    - name: Generate gprof report
+      run: gprof profiling gmon.out > profile.txt
+      
+    - name: Display report
+      run: cat profile.txt
+      
+    - name: Upload profile as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: profiling-report
+        path: profile.txt
+        retention-days: 7
